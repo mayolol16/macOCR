@@ -3,15 +3,13 @@
 //  OCR
 //
 //  Created by Marcus Schappi on 17/5/21, 11:36 am
+// Modidied by Mark Youssef on June 7th, 2024 
 //
 
 import Foundation
 import CoreImage
 import Cocoa
 import Vision
-import ScreenCapture
-import ArgumentParserKit
-
 
 var joiner = " "
 var bigSur = false;
@@ -48,35 +46,25 @@ func recognizeTextHandler(request: VNRequest, error: Error?) {
     
 }
 
-func detectText(fileName : URL) -> [CIFeature]? {
-    if let ciImage = CIImage(contentsOf: fileName){
-        guard let img = convertCIImageToCGImage(inputImage: ciImage) else { return nil}
-      
-        let requestHandler = VNImageRequestHandler(cgImage: img)
+func detectText(image: CGImage) {
+    let requestHandler = VNImageRequestHandler(cgImage: image)
 
-        // Create a new request to recognize text.
-        let request = VNRecognizeTextRequest(completionHandler: recognizeTextHandler)
-        request.recognitionLanguages = recognitionLanguages
-       
-        
-        do {
-            // Perform the text-recognition request.
-            try requestHandler.perform([request])
-        } catch {
-            print("Unable to perform the requests: \(error).")
-        }
-}
-    return nil
+    // Create a new request to recognize text.
+    let request = VNRecognizeTextRequest(completionHandler: recognizeTextHandler)
+    request.recognitionLanguages = recognitionLanguages
+    
+    do {
+        // Perform the text-recognition request.
+        try requestHandler.perform([request])
+    } catch {
+        print("Unable to perform the requests: \(error).")
+    }
 }
 
-
-
-let inputURL = URL(fileURLWithPath: "/tmp/ocr.png")
+let inputURL = URL(fileURLWithPath: "/path/to/your/image.png")
 var recognitionLanguages = ["en-US"]
 
 do {
-    
-    
     let arguments = Array(CommandLine.arguments.dropFirst())
 
     let parser = ArgumentParser(usage: "<options>", overview: "macOCR is a command line app that enables you to turn any text on your screen into text on your clipboard")
@@ -95,9 +83,11 @@ do {
         }
     }
 
-    let _ = ScreenCapture.captureRegion(destination: "/tmp/ocr.png")
-
-    if let features = detectText(fileName : inputURL), !features.isEmpty{}
+    // Load the image from file
+    let image = NSImage(contentsOf: inputURL)?.cgImage(forProposedRect: nil, context: nil, hints: nil)
+    if let image = image {
+        detectText(image: image)
+    }
 
 } catch {
     // handle parsing error
